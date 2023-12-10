@@ -11,6 +11,7 @@
 		2F8D24A82B222D72009C0212 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F8D24A72B222D72009C0212 /* ContentView.swift */; };
 		2F8D24AA2B222D74009C0212 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F8D24A92B222D74009C0212 /* Assets.xcassets */; };
 		2F8D24AD2B222D74009C0212 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F8D24AC2B222D74009C0212 /* Preview Assets.xcassets */; };
+		2F9E07BF2B26217700191FCD /* testRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F9E07BE2B26217700191FCD /* testRequestView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +20,7 @@
 		2F8D24A72B222D72009C0212 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2F8D24A92B222D74009C0212 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2F8D24AC2B222D74009C0212 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		2F9E07BE2B26217700191FCD /* testRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = testRequestView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +57,7 @@
 				2F8D24A72B222D72009C0212 /* ContentView.swift */,
 				2F8D24A92B222D74009C0212 /* Assets.xcassets */,
 				2F8D24AB2B222D74009C0212 /* Preview Content */,
+				2F9E07BE2B26217700191FCD /* testRequestView.swift */,
 			);
 			path = "AI Podcast";
 			sourceTree = "<group>";
@@ -137,6 +140,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2F9E07BF2B26217700191FCD /* testRequestView.swift in Sources */,
 				2F8D24A82B222D72009C0212 /* ContentView.swift in Sources */,
 				2F8D24A62B222D72009C0212 /* AI_PodcastApp.swift in Sources */,
 			);

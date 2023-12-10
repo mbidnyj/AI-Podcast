@@ -9,10 +9,13 @@ import SwiftUI
 
 struct testRequestView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Text("This is the testRequestView")
+        // Add more UI components as needed
     }
 }
 
-#Preview {
-    testRequestView()
+struct testRequestView_Previews: PreviewProvider {
+    static var previews: some View {
+        testRequestView()
+    }
 }
