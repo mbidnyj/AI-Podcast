@@ -8,14 +8,15 @@
 import SwiftUI
 
 struct testRequestView: View {
+    var receivedText: String
+
     var body: some View {
-        Text("This is the testRequestView")
-        // Add more UI components as needed
+        Text("Received: \(receivedText)")
     }
 }
 
 struct testRequestView_Previews: PreviewProvider {
     static var previews: some View {
-        testRequestView()
+        testRequestView(receivedText: "Some string")
     }
 }
