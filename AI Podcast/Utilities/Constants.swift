@@ -11,5 +11,5 @@ struct Constants {
     // URLs, Keys, and any other constants
     static let getAuth = "http://192.168.68.104:3000/api/getAuth"
     static let startPodcast = "http://192.168.68.104:3000/api/startPodcast"
-    static let getNextEpisode = "http://192.168.68.104:3000/api/getNextEpisode"
+    static let getNextPart = "http://192.168.68.104:3000/api/getNextPart"
 }

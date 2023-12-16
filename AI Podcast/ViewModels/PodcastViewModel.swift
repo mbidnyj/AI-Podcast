@@ -26,7 +26,9 @@ class PodcastViewModel: ObservableObject {
     
     
     
+    // getAuth
     func fetchAuthToken() {
+        print("fetchAuthMethod method called in ViewModel")
         apiService.getAuth { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -44,6 +46,7 @@ class PodcastViewModel: ObservableObject {
     
     
     
+    // startPodcast
     func setupAudioSession() {
             do {
                 try AVAudioSession.sharedInstance().setCategory(.playback)
@@ -56,12 +59,27 @@ class PodcastViewModel: ObservableObject {
     
     
     func startPodcast(topic: String) {
+            print("startPodcast method called in ViewModel")
             guard let authToken = self.authToken else {
                 // Handle the error case where auth token is not available
                 return
             }
+            
+            // Convert the authToken string to Data
+            guard let data = authToken.data(using: .utf8) else {
+                print("Invalid auth token format.")
+                return
+            }
+        
+            // Parse the JSON data
+            guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
+                  let dictionary = json as? [String: Any],
+                  let userId = dictionary["userId"] as? String else {
+                print("Failed to parse userId from auth token.")
+                return
+            }
 
-            apiService.startPodcast(withID: authToken, topic: topic) { [weak self] result in
+            apiService.startPodcast(withID: userId, topic: topic) { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let streamUrl):
@@ -146,5 +164,42 @@ class PodcastViewModel: ObservableObject {
     
     deinit {
             cleanup()
+        }
+    
+    
+    
+    // getNextEpisode
+    func getNextEpisode() {
+            print("getNextEpisode method called in ViewModel")
+            guard let authToken = self.authToken else {
+                // Handle the error case where auth token is not available
+                return
+            }
+            
+            // Convert the authToken string to Data
+            guard let data = authToken.data(using: .utf8) else {
+                print("Invalid auth token format.")
+                return
+            }
+    
+            // Parse the JSON data
+            guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
+                  let dictionary = json as? [String: Any],
+                  let userId = dictionary["userId"] as? String else {
+                print("Failed to parse userId from auth token.")
+                return
+            }
+
+            apiService.getNextEpisode(userId: userId) { [weak self] result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let streamUrl):
+                        self?.playAudio(from: streamUrl)
+                    case .failure(let error):
+                        // Handle errors
+                        print("Error getting next episode: \(error.localizedDescription)")
+                    }
+                }
+            }
         }
 }

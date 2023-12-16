@@ -35,13 +35,17 @@ struct getAuthTestView: View {
                         Text("Podcast is stopped.")
                     }
 
-                    Button(action: {
-                        // Pass the podcastTopic to the startPodcast function
-                        viewModel.startPodcast(topic: podcastTopic)
-                    }) {
-                        Text("Start Podcast")
-                    }
-                    .disabled(viewModel.isPlaying || podcastTopic.isEmpty)
+                    Button("Start Podcast") {
+                                viewModel.startPodcast(topic: podcastTopic)
+                                print("Start Podcast button tapped")
+                            }
+                            .disabled(viewModel.isPlaying || podcastTopic.isEmpty)
+
+                    Button("Get Next Episode") {
+                                viewModel.getNextEpisode()
+                                print("Get Next Episode button tapped")
+                            }
+                            .disabled(viewModel.isPlaying || podcastTopic.isEmpty)
 
                     // Play/Pause button
                     Button(action: viewModel.togglePlayPause) {
@@ -51,6 +55,9 @@ struct getAuthTestView: View {
                             .padding()
                     }
             }
+            .onAppear {
+                    print("ContentView appeared")
+                }
         }
 }
 
