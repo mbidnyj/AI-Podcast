@@ -44,30 +44,59 @@ struct APIService {
     
     
     
-    func startPodcast(withID id: String, topic: String, completion: @escaping (Result<URL, Error>) -> Void) {
-        print("startPodcast API service called")
-        let urlString = Constants.startPodcast + "?topic=\(topic)&userId=\(id)"
-        //print("URL String: \(urlString)")
-        guard let url = URL(string: urlString) else {
-            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL string"])))
-            return
+    func createEpisode(userId: String, topic: String, completion: @escaping (Bool) -> Void) {
+            let url = URL(string: Constants.createEpisode + "?userId=\(userId)" + "&topic=\(topic)")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            
+            let task = URLSession.shared.dataTask(with: request) { _, response, error in
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    completion(false)
+                    return
+                }
+                completion(true)
+            }
+            task.resume()
         }
-
-        completion(.success(url))
-    }
-
     
     
-    func getNextEpisode(userId: String, completion: @escaping (Result<URL, Error>) -> Void) {
-            print("getNextEpisode API service called")
-            let urlString = Constants.getNextPart + "?userId=\(userId)"
-            //print("URL String: \(urlString)")
-            guard let url = URL(string: urlString) else {
-                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL string"])))
+    
+    func retrieveEpisode(userId: String, completion: @escaping (Result<URL, Error>) -> Void) {
+        let url = URL(string: Constants.retrieveEpisode + "?userId=\(userId)")!
+        print("retrieveEpisode called with URL: \(url.absoluteString)")
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Network error occurred: \(error)")
+                completion(.failure(error))
                 return
             }
 
-            completion(.success(url))
-        }
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("Unexpected response status code or type.")
+                completion(.failure(NSError(domain: "", code: -1, userInfo: nil)))
+                return
+            }
 
+            guard let mimeType = httpResponse.mimeType, mimeType == "audio/aac" else {
+                print("Wrong MIME type received: \(httpResponse.mimeType ?? "Unknown")")
+                completion(.failure(NSError(domain: "", code: -1, userInfo: nil)))
+                return
+            }
+
+            // Assuming the API returns the direct URL of the .aac file
+            if let url = httpResponse.url {
+                print("Audio file URL: \(url.absoluteString)")
+                completion(.success(url))
+            } else {
+                print("Failed to retrieve audio file URL.")
+                completion(.failure(NSError(domain: "", code: -1, userInfo: nil)))
+            }
+        }
+        task.resume()
+    }
+    
 }

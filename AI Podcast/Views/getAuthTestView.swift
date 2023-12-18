@@ -12,40 +12,25 @@ struct getAuthTestView: View {
     @State private var podcastTopic = ""
     
     var body: some View {
-            VStack {
-                if let authToken = viewModel.authToken {
-                    Text("Auth Token: \(authToken)")
-                } else {
-                    Text("Fetching Auth Token...")
-                        .onAppear {
-                            viewModel.fetchAuthToken()
-                        }
-                }
-            }
-        
+//            VStack {
+//                if let authToken = viewModel.authToken {
+//                    Text("Auth Token: \(authToken)")
+//                } else {
+//                    Text("Fetching Auth Token...")
+//                        .onAppear {
+//                            viewModel.fetchAuthToken()
+//                        }
+//                }
+//            }
         
             VStack {
                     TextField("Enter podcast topic", text: $podcastTopic)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
 
-                    if viewModel.isPlaying {
-                        Text("Podcast is playing...")
-                    } else {
-                        Text("Podcast is stopped.")
-                    }
-
                     Button("Start Podcast") {
-                                viewModel.startPodcast(topic: podcastTopic)
-                                print("Start Podcast button tapped")
-                            }
-                            .disabled(viewModel.isPlaying || podcastTopic.isEmpty)
-
-                    Button("Get Next Episode") {
-                                viewModel.getNextEpisode()
-                                print("Get Next Episode button tapped")
-                            }
-                            .disabled(viewModel.isPlaying || podcastTopic.isEmpty)
+                        viewModel.startPodcastProcess(topic: podcastTopic)
+                    }
 
                     // Play/Pause button
                     Button(action: viewModel.togglePlayPause) {
@@ -56,8 +41,9 @@ struct getAuthTestView: View {
                     }
             }
             .onAppear {
-                    print("ContentView appeared")
-                }
+                viewModel.fetchAuthToken()
+                print("ContentView appeared")
+            }
         }
 }
 

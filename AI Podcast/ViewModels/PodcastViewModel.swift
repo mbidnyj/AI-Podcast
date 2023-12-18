@@ -10,23 +10,17 @@ import AVFoundation
 import Combine
 
 
+
 class PodcastViewModel: ObservableObject {
-    // fetchAuthToken
+
     @Published var authToken: String?
     private var apiService = APIService()
-    // startPodcast
-    @Published var currentAudioURL: URL?
+
     @Published var isPlaying = false
     var audioPlayer: AVPlayer?
-    var playerItem: AVPlayerItem?
-    var endPlaybackObserver: Any?
-    var playerStatusObserver: AnyCancellable?
-    // getNextPart
-    // setQuestion
     
     
     
-    // getAuth
     func fetchAuthToken() {
         print("fetchAuthMethod method called in ViewModel")
         apiService.getAuth { [weak self] result in
@@ -46,160 +40,87 @@ class PodcastViewModel: ObservableObject {
     
     
     
-    // startPodcast
-    func setupAudioSession() {
-            do {
-                try AVAudioSession.sharedInstance().setCategory(.playback)
-                try AVAudioSession.sharedInstance().setActive(true)
-            } catch {
-                print("Failed to set and activate audio session.")
-            }
+    func startPodcastProcess(topic: String) {
+        guard let authToken = self.authToken else {
+            // Handle the error case where auth token is not available
+            return
         }
-    
-    
-    
-    func startPodcast(topic: String) {
-            print("startPodcast method called in ViewModel")
-            guard let authToken = self.authToken else {
-                // Handle the error case where auth token is not available
-                return
-            }
-            
-            // Convert the authToken string to Data
-            guard let data = authToken.data(using: .utf8) else {
-                print("Invalid auth token format.")
-                return
-            }
-        
-            // Parse the JSON data
-            guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
-                  let dictionary = json as? [String: Any],
-                  let userId = dictionary["userId"] as? String else {
-                print("Failed to parse userId from auth token.")
-                return
-            }
 
-            apiService.startPodcast(withID: userId, topic: topic) { [weak self] result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success(let streamUrl):
-                        self?.currentAudioURL = streamUrl
-                        self?.playAudio(from: streamUrl)
-                    case .failure(let error):
-                        // Handle errors
-                        print("Error starting podcast: \(error.localizedDescription)")
-                    }
-                }
+        // Convert the authToken string to Data
+        guard let data = authToken.data(using: .utf8) else {
+            print("Invalid auth token format.")
+            return
+        }
+
+        // Parse the JSON data
+        guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
+              let dictionary = json as? [String: Any],
+              let userId = dictionary["userId"] as? String else {
+            print("Failed to parse userId from auth token.")
+            return
+        }
+        
+        apiService.createEpisode(userId: userId, topic: topic) { [weak self] success in
+            if success {
+                self?.retrieveAndPlayEpisode(userId: userId)
+            } else {
+                // Handle the error, such as updating a state variable to show an error message
             }
         }
+    }
+    
+    
+    
+    private func retrieveAndPlayEpisode(userId: String) {
+        apiService.retrieveEpisode(userId: userId) { [weak self] result in
+            switch result {
+            case .success(let audioUrl):
+                self?.playAudio(from: audioUrl)
+            case .failure:
+                print("An error occured in retrieveAndPlayEpisode...")
+                // Handle the error, such as updating a state variable to show an error message
+            }
+        }
+    }
     
     
     
     func playAudio(from url: URL) {
-            setupAudioSession()
+            // Set up the audio session for playback
+            do {
+                try AVAudioSession.sharedInstance().setCategory(.playback)
+                try AVAudioSession.sharedInstance().setActive(true)
+                print("Audio Session is set up for playback.")
+            } catch {
+                print("Failed to set up audio session: \(error)")
+                return
+            }
 
-            self.playerItem = AVPlayerItem(url: url)
-            self.audioPlayer = AVPlayer(playerItem: self.playerItem)
-
-            // Add observer for the end of the playback
-            endPlaybackObserver = NotificationCenter.default.addObserver(
-                forName: .AVPlayerItemDidPlayToEndTime,
-                object: self.playerItem,
-                queue: .main) { [weak self] _ in
-                    self?.isPlaying = false
-                    // Perform any additional actions if needed
-                }
-
-            // Observe the player item's status to update the UI
-            playerStatusObserver = self.playerItem?.publisher(for: \.status)
-                .receive(on: DispatchQueue.main)
-                .sink(receiveValue: { [weak self] status in
-                    switch status {
-                    case .readyToPlay:
-                        self?.isPlaying = true
-                    case .failed:
-                        self?.isPlaying = false
-                    default:
-                        break
-                    }
-                })
-
+            // Initialize the AVPlayer with the URL
+            DispatchQueue.main.async {
+                self.audioPlayer = AVPlayer(url: url)
+                self.audioPlayer?.play()
+                print("Audio playback started.")
+            }
+        
+            // Start playback
             self.audioPlayer?.play()
-        }
+            self.isPlaying = true
+    }
     
     
     
     func togglePlayPause() {
-            guard let player = audioPlayer else { return }
+        guard let player = audioPlayer else { return }
 
-            if player.timeControlStatus == .playing {
-                player.pause()
-                isPlaying = false
-            } else {
-                player.play()
-                isPlaying = true
-            }
+        if self.isPlaying {
+            player.pause()
+        } else {
+            player.play()
         }
+        self.isPlaying.toggle()
+    }
     
     
     
-    private func cleanup() {
-            if let observer = endPlaybackObserver {
-                NotificationCenter.default.removeObserver(observer)
-                endPlaybackObserver = nil
-            }
-            playerStatusObserver?.cancel()
-            try? AVAudioSession.sharedInstance().setActive(false)
-        }
-    
-    
-    
-    func stopPlayback() {
-            audioPlayer?.pause()
-            isPlaying = false
-            cleanup()
-        }
-
-    
-    
-    deinit {
-            cleanup()
-        }
-    
-    
-    
-    // getNextEpisode
-    func getNextEpisode() {
-            print("getNextEpisode method called in ViewModel")
-            guard let authToken = self.authToken else {
-                // Handle the error case where auth token is not available
-                return
-            }
-            
-            // Convert the authToken string to Data
-            guard let data = authToken.data(using: .utf8) else {
-                print("Invalid auth token format.")
-                return
-            }
-    
-            // Parse the JSON data
-            guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
-                  let dictionary = json as? [String: Any],
-                  let userId = dictionary["userId"] as? String else {
-                print("Failed to parse userId from auth token.")
-                return
-            }
-
-            apiService.getNextEpisode(userId: userId) { [weak self] result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success(let streamUrl):
-                        self?.playAudio(from: streamUrl)
-                    case .failure(let error):
-                        // Handle errors
-                        print("Error getting next episode: \(error.localizedDescription)")
-                    }
-                }
-            }
-        }
 }
