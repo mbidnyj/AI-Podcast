@@ -8,60 +8,52 @@
 import SwiftUI
 
 struct PodcastView: View {
-    @Binding var receivedTopic: String
+    var receivedTopic: String
     @StateObject private var viewModel = PodcastViewModel()
     @State private var podcastTopic = ""
     
     var body: some View {
-//            VStack {
-//                if let authToken = viewModel.authToken {
-//                    Text("Auth Token: \(authToken)")
-//                } else {
-//                    Text("Fetching Auth Token...")
-//                        .onAppear {
-//                            viewModel.fetchAuthToken()
-//                        }
-//                }
-//            }
-        
+        //            VStack {
+        //                if let authToken = viewModel.authToken {
+        //                    Text("Auth Token: \(authToken)")
+        //                } else {
+        //                    Text("Fetching Auth Token...")
+        //                        .onAppear {
+        //                            viewModel.fetchAuthToken()
+        //                        }
+        //                }
+        //            }
+        GeometryReader { geometry in
             VStack {
-                    // the title of the podcast
-                    Text(receivedTopic)
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.top)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                Text(receivedTopic)
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .padding(.top)
+                    .frame(maxWidth: .infinity, alignment: .top)
                 
-//                    TextField("Enter podcast topic", text: $podcastTopic)
-//                        .textFieldStyle(RoundedBorderTextFieldStyle())
-//                        .padding()
-//
-//                    Button(viewModel.isLooping ? "Stop Podcast Loop" : "Start Podcast Loop") {
-//                        if viewModel.isLooping {
-//                            viewModel.stopLoop()
-//                        } else {
-//                            viewModel.startLoop(topic: podcastTopic)
-//                        }
-//                    }
-//                    .padding()
+                // displaying image
+                Spacer().frame(height: 50)
+                if viewModel.isLoadingImage {
+                    ProgressView()
+                        .frame(width: geometry.size.width * 0.95)
+                } else if let image = viewModel.coverImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: geometry.size.width * 1)
+                }
                 
-                    // displaying image
-                    if viewModel.isLoadingImage {
-                        ProgressView()
-                    } else if let image = viewModel.coverImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    }
-
+                VStack{
+                    Spacer()
+                    
                     // Play/Pause button
                     Button(action: viewModel.togglePlayPause) {
                         Image(systemName: viewModel.isPlaying ? "pause.circle" : "play.circle")
                             .resizable()
                             .frame(width: 50, height: 50)
-                            .padding()
+                            .padding(.bottom, 30)
                     }
-                
+                    
                     HStack {
                         TextField("Podcast qeustion...", text: $podcastTopic)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -69,6 +61,7 @@ struct PodcastView: View {
                         
                         Button(action: {
                             viewModel.startLoop(topic: podcastTopic)
+                            podcastTopic = ""
                         }) {
                             Image(systemName: "paperplane.fill")
                                 .foregroundColor(.white)
@@ -78,18 +71,19 @@ struct PodcastView: View {
                         }
                         .padding(.trailing)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                }
             }
             .onAppear {
-                print("onAppear view is triggered with receivedTopic parameter: ", receivedTopic)
-                //viewModel.fetchAuthToken()
-                viewModel.startLoop(topic: receivedTopic)
+                viewModel.fetchAuthToken {
+                    viewModel.startLoop(topic: receivedTopic)
+                }
                 viewModel.loadCoverImage(topic: receivedTopic)
                 print("ContentView appeared")
             }
         }
+    }
 }
 
 #Preview {
-    PodcastView(receivedTopic: .constant("Sample Topic"))
+    PodcastView(receivedTopic: "What is API?")
 }

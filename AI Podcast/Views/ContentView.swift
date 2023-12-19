@@ -13,6 +13,16 @@ struct ContentView: View {
   // 1. Define state variables to manage the text input
     @State private var inputTopic: String = ""
     @State private var showTestRequestView: Bool = false
+    @State private var temporaryTopic: String = ""
+    @State private var selectedTopic: String?
+    let topics = [
+            "Mastering Money Management?",
+            "Navigating Mental Wellness?",
+            "Trending in Pop Culture?",
+            "Tech's Latest Innovations?",
+            "Culinary Cultures Explored?",
+            "Mysteries: Solved, Unsolved?"
+        ]
     
     var body: some View {
         NavigationStack {
@@ -29,17 +39,20 @@ struct ContentView: View {
                 // 3. Use a LazyVGrid to create a grid layout for buttons
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
                     // 3.1. Create 6 buttons in the grid
-                    ForEach(0..<6, id: \.self) { index in
-                        Button(action: {
-                            // Define the action for each button here
-                        }) {
-                            Text("Topic \(index + 1)")
-                                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 50)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                        }
-                    }
+                    ForEach(topics.indices, id: \.self) { index in
+                                    Button(action: {
+                                        // When the button is tapped, set the selectedTopic
+                                        // This will trigger the navigation
+                                        self.selectedTopic = topics[index]
+                                    }) {
+                                        Text(topics[index])
+                                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 60)
+                                            .background(Color.blue)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(10)
+                                    }
+                                    .padding(.horizontal)
+                                }
                 }
                 .padding()
                 .frame(maxHeight: .infinity, alignment: .center)
@@ -53,6 +66,10 @@ struct ContentView: View {
                     
                     // 5. Send button
                     Button(action: {
+                        // Store the topic in temporary variable
+                        temporaryTopic = inputTopic
+                        // Clear the TextField
+                        inputTopic = ""
                         // This will trigger the navigation
                         self.showTestRequestView = true
                     }) {
@@ -64,15 +81,24 @@ struct ContentView: View {
                     }
                     .padding(.trailing)
                     .navigationDestination(isPresented: $showTestRequestView) {
-                        PodcastView(receivedTopic: $inputTopic)
+                        PodcastView(receivedTopic: temporaryTopic)
                                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             }
             .padding(.bottom)
+            .navigationDestination(isPresented: .constant(selectedTopic != nil), destination: {
+                        if let selectedTopic = selectedTopic {
+                            PodcastView(receivedTopic: selectedTopic)
+                        } else {
+                            EmptyView()
+                        }
+                    })
         }
     }
 }
+
+
 
 // Preview provider to visualize the ContentView in the Xcode canvas
 struct ContentView_Previews: PreviewProvider {

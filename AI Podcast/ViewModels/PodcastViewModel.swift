@@ -30,22 +30,23 @@ class PodcastViewModel: ObservableObject {
     
     
     // getAuth
-    func fetchAuthToken() {
-        print("fetchAuthMethod method called in ViewModel")
+    func fetchAuthToken(completion: @escaping () -> Void) {
+        print("fetchAuthToken is called inside of the ViewModel")
         apiService.getAuth { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let token):
                     self?.authToken = token
-                    // Store the token using LocalStorageManager
                     LocalStorageManager().saveId(token)
+                    completion() // Call the completion handler here
                 case .failure(let error):
-                    // Handle error, update UI accordingly
-                    print("Error fetching auth token: \(error.localizedDescription)")
+                    print("Error: \(error.localizedDescription)")
+                    completion() // Call completion even in case of failure
                 }
             }
         }
     }
+
     
     
     
@@ -184,6 +185,7 @@ class PodcastViewModel: ObservableObject {
     
     
     
+    // getCover
     func loadCoverImage(topic: String) {
         isLoadingImage = true
         apiService.getCoverImageURL(topic: topic) { [weak self] result in
@@ -202,6 +204,7 @@ class PodcastViewModel: ObservableObject {
     
     
     
+    // getCover
     private func downloadImage(from url: URL) {
         URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
             DispatchQueue.main.async {
