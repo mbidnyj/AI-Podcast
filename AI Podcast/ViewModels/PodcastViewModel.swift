@@ -8,19 +8,28 @@
 import Foundation
 import AVFoundation
 import Combine
+import UIKit
 
 
 
 class PodcastViewModel: ObservableObject {
-
+    // getAuth
     @Published var authToken: String?
     private var apiService = APIService()
-
+    // createEpisode, retrieveEpisode
     @Published var isPlaying = false
     var audioPlayer: AVPlayer?
+    // looping podcast
+    @Published var isLooping = false
+    var isCurrentEpisodeFinished = true
+    var isCreateEpisodeSuccessful = false
+    // getCover
+    @Published var coverImage: UIImage?
+    @Published var isLoadingImage = false
     
     
     
+    // getAuth
     func fetchAuthToken() {
         print("fetchAuthMethod method called in ViewModel")
         apiService.getAuth { [weak self] result in
@@ -40,53 +49,104 @@ class PodcastViewModel: ObservableObject {
     
     
     
-    func startPodcastProcess(topic: String) {
+    // looping podcast
+    func startLoop(topic: String) {
+        isLooping = true
+        initiateEpisodeCreation(topic: topic)
+    }
+
+    // looping podcast
+    func stopLoop() {
+        isLooping = false
+        audioPlayer?.pause()
+    }
+    
+    
+    
+    // createEpisode, retrieveEpisode
+    private func initiateEpisodeCreation(topic: String) {
         guard let authToken = self.authToken else {
             // Handle the error case where auth token is not available
             return
         }
-
+        
         // Convert the authToken string to Data
         guard let data = authToken.data(using: .utf8) else {
             print("Invalid auth token format.")
             return
         }
-
+        
         // Parse the JSON data
         guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
-              let dictionary = json as? [String: Any],
-              let userId = dictionary["userId"] as? String else {
+                let dictionary = json as? [String: Any],
+                let userId = dictionary["userId"] as? String else {
             print("Failed to parse userId from auth token.")
             return
         }
         
+        isCreateEpisodeSuccessful = false
         apiService.createEpisode(userId: userId, topic: topic) { [weak self] success in
+            print("createEpisode inside of initiateEpisodeCreation was fired")
             if success {
-                self?.retrieveAndPlayEpisode(userId: userId)
+                self?.isCreateEpisodeSuccessful = true
+                self?.checkAndRetrieveEpisode()
             } else {
-                // Handle the error, such as updating a state variable to show an error message
+                // Handle error or retry logic
             }
         }
     }
     
     
     
-    private func retrieveAndPlayEpisode(userId: String) {
+    // looping podcast
+    private func checkAndRetrieveEpisode() {
+        if isLooping && isCreateEpisodeSuccessful && isCurrentEpisodeFinished {
+            retrieveAndPlayEpisode()
+        }
+    }
+    
+    
+    
+    // createEpisode, retrieveEpisode
+    private func retrieveAndPlayEpisode() {
+        guard let authToken = self.authToken else {
+            // Handle the error case where auth token is not available
+            return
+        }
+        
+        // Convert the authToken string to Data
+        guard let data = authToken.data(using: .utf8) else {
+            print("Invalid auth token format.")
+            return
+        }
+        
+        // Parse the JSON data
+        guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
+                let dictionary = json as? [String: Any],
+                let userId = dictionary["userId"] as? String else {
+            print("Failed to parse userId from auth token.")
+            return
+        }
+        
+        isCurrentEpisodeFinished = false
         apiService.retrieveEpisode(userId: userId) { [weak self] result in
             switch result {
             case .success(let audioUrl):
                 self?.playAudio(from: audioUrl)
-            case .failure:
-                print("An error occured in retrieveAndPlayEpisode...")
-                // Handle the error, such as updating a state variable to show an error message
+                self?.initiateEpisodeCreation(topic: "") // Start next episode creation
+                self?.isPlaying = true
+            case .failure(let error):
+                print("Error retrieving episode: \(error.localizedDescription)")
+                // Handle error or retry logic
             }
         }
     }
     
     
     
+    // looping podcast + start/stop player
     func playAudio(from url: URL) {
-            // Set up the audio session for playback
+            // Setup the audio session for playback
             do {
                 try AVAudioSession.sharedInstance().setCategory(.playback)
                 try AVAudioSession.sharedInstance().setActive(true)
@@ -96,20 +156,69 @@ class PodcastViewModel: ObservableObject {
                 return
             }
 
-            // Initialize the AVPlayer with the URL
+            // Initialize the AVPlayer with the URL and start playing
             DispatchQueue.main.async {
-                self.audioPlayer = AVPlayer(url: url)
+                let playerItem = AVPlayerItem(url: url)
+                NotificationCenter.default.addObserver(self, selector: #selector(self.audioDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: playerItem)
+                self.audioPlayer = AVPlayer(playerItem: playerItem)
                 self.audioPlayer?.play()
-                print("Audio playback started.")
+                self.isCurrentEpisodeFinished = false
             }
-        
-            // Start playback
-            self.audioPlayer?.play()
-            self.isPlaying = true
+        }
+
+    
+    
+    // looping podcast
+    @objc private func audioDidFinishPlaying(_ notification: Notification) {
+        isCurrentEpisodeFinished = true
+        print("audioDidFinishPlaying method was triggered")
+        checkAndRetrieveEpisode()
+    }
+
+    
+    
+    // looping podcast
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     
     
+    func loadCoverImage(topic: String) {
+        isLoadingImage = true
+        apiService.getCoverImageURL(topic: topic) { [weak self] result in
+            switch result {
+            case .success(let imageURL):
+                self?.downloadImage(from: imageURL)
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self?.isLoadingImage = false
+                    print("Error fetching image URL: \(error)")
+                    // Handle the error appropriately
+                }
+            }
+        }
+    }
+    
+    
+    
+    private func downloadImage(from url: URL) {
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            DispatchQueue.main.async {
+                self?.isLoadingImage = false
+                guard let data = data, error == nil, let image = UIImage(data: data) else {
+                    print("Error downloading image: \(error?.localizedDescription ?? "Unknown error")")
+                    // Handle the error
+                    return
+                }
+                self?.coverImage = image
+            }
+        }.resume()
+    }
+    
+    
+    
+    // start/stop player
     func togglePlayPause() {
         guard let player = audioPlayer else { return }
 
@@ -120,7 +229,5 @@ class PodcastViewModel: ObservableObject {
         }
         self.isPlaying.toggle()
     }
-    
-    
     
 }

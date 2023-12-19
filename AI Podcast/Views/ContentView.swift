@@ -11,7 +11,7 @@ import SwiftUI
 
 struct ContentView: View {
   // 1. Define state variables to manage the text input
-    @State private var inputText: String = ""
+    @State private var inputTopic: String = ""
     @State private var showTestRequestView: Bool = false
     
     var body: some View {
@@ -33,7 +33,7 @@ struct ContentView: View {
                         Button(action: {
                             // Define the action for each button here
                         }) {
-                            Text("Button \(index + 1)")
+                            Text("Topic \(index + 1)")
                                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 50)
                                 .background(Color.blue)
                                 .foregroundColor(.white)
@@ -47,7 +47,7 @@ struct ContentView: View {
                 // 2.3. Text input and send button section
                 HStack {
                     // 4. Text input field
-                    TextField("Type something...", text: $inputText)
+                    TextField("Podcast topic...", text: $inputTopic)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding(.leading)
                     
@@ -64,7 +64,7 @@ struct ContentView: View {
                     }
                     .padding(.trailing)
                     .navigationDestination(isPresented: $showTestRequestView) {
-                                        testRequestView(receivedText: inputText)
+                        PodcastView(receivedTopic: $inputTopic)
                                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
