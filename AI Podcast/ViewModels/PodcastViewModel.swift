@@ -52,7 +52,17 @@ class PodcastViewModel: ObservableObject {
     
     // looping podcast
     func startLoop(topic: String) {
+//        // Release the current item when new question is asked
+//        audioPlayer?.replaceCurrentItem(with: nil)
+        // Stop and reset the current player if it's playing
+        if isPlaying {
+            audioPlayer?.pause()
+            audioPlayer?.replaceCurrentItem(with: nil)
+            NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        }
+        
         isLooping = true
+        isCurrentEpisodeFinished = true
         initiateEpisodeCreation(topic: topic)
     }
 
@@ -87,7 +97,6 @@ class PodcastViewModel: ObservableObject {
         
         isCreateEpisodeSuccessful = false
         apiService.createEpisode(userId: userId, topic: topic) { [weak self] success in
-            print("createEpisode inside of initiateEpisodeCreation was fired")
             if success {
                 self?.isCreateEpisodeSuccessful = true
                 self?.checkAndRetrieveEpisode()
@@ -147,26 +156,31 @@ class PodcastViewModel: ObservableObject {
     
     // looping podcast + start/stop player
     func playAudio(from url: URL) {
-            // Setup the audio session for playback
-            do {
-                try AVAudioSession.sharedInstance().setCategory(.playback)
-                try AVAudioSession.sharedInstance().setActive(true)
-                print("Audio Session is set up for playback.")
-            } catch {
-                print("Failed to set up audio session: \(error)")
-                return
-            }
-
-            // Initialize the AVPlayer with the URL and start playing
-            DispatchQueue.main.async {
-                let playerItem = AVPlayerItem(url: url)
-                NotificationCenter.default.addObserver(self, selector: #selector(self.audioDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: playerItem)
-                self.audioPlayer = AVPlayer(playerItem: playerItem)
-                self.audioPlayer?.play()
-                self.isCurrentEpisodeFinished = false
-            }
+        // Setup the audio session for playback
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback)
+            try AVAudioSession.sharedInstance().setActive(true)
+            print("Audio Session is set up for playback.")
+        } catch {
+            print("Failed to set up audio session: \(error)")
+            return
         }
 
+        // Initialize the AVPlayer with the URL and start playing
+        DispatchQueue.main.async {
+            // Reset the player and remove existing observers
+            self.audioPlayer?.replaceCurrentItem(with: nil)
+            NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+
+            // Create a new player item and start playing
+            let playerItem = AVPlayerItem(url: url)
+            NotificationCenter.default.addObserver(self, selector: #selector(self.audioDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: playerItem)
+            self.audioPlayer = AVPlayer(playerItem: playerItem)
+            self.audioPlayer?.play()
+            self.isCurrentEpisodeFinished = false
+            self.isPlaying = true
+        }
+    }
     
     
     // looping podcast
