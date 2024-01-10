@@ -19,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2F0ED83E2B4CB2A000177E9B /* AI-Podcast-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "AI-Podcast-Info.plist"; sourceTree = SOURCE_ROOT; };
 		2F3C2C8F2B2DFE9C007D6473 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		2F3C2C982B2DFF5D007D6473 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		2F3C2C9B2B2DFF83007D6473 /* LocalStorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStorageManager.swift; sourceTree = "<group>"; };
@@ -102,6 +103,7 @@
 		2F8D24A42B222D72009C0212 /* AI Podcast */ = {
 			isa = PBXGroup;
 			children = (
+				2F0ED83E2B4CB2A000177E9B /* AI-Podcast-Info.plist */,
 				2F8D24A52B222D72009C0212 /* AI_PodcastApp.swift */,
 				2F3C2C9D2B2E0078007D6473 /* Views */,
 				2F3C2CA02B2E02EB007D6473 /* ViewModels */,
@@ -335,6 +337,7 @@
 				DEVELOPMENT_TEAM = R2AL294ZT9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AI-Podcast-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -364,6 +367,7 @@
 				DEVELOPMENT_TEAM = R2AL294ZT9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AI-Podcast-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

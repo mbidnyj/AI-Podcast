@@ -27,6 +27,62 @@ class PodcastViewModel: ObservableObject {
     @Published var coverImage: UIImage?
     @Published var isLoadingImage = false
     
+//    init() {
+//        setupAudioSession()
+//        setupNotifications()
+//    }
+//    
+//    private func setupAudioSession() {
+//        do {
+//            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+//            try AVAudioSession.sharedInstance().setActive(true)
+//        } catch {
+//            print("Failed to set up audio session: \(error)")
+//        }
+//    }
+//    
+//    private func setupNotifications() {
+//        NotificationCenter.default.addObserver(self,
+//                                                selector: #selector(handleInterruption),
+//                                                name: AVAudioSession.interruptionNotification,
+//                                                object: AVAudioSession.sharedInstance())
+//            
+//        NotificationCenter.default.addObserver(self,
+//                                                selector: #selector(handleAppBecameActive),
+//                                                name: UIApplication.didBecomeActiveNotification,
+//                                                object: nil)
+//    }
+//    
+//    @objc private func handleInterruption(_ notification: Notification) {
+//        guard let info = notification.userInfo,
+//                let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+//                let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+//            return
+//        }
+//
+//        if type == .ended, let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt {
+//            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+//            if options.contains(.shouldResume) {
+//                // Resume playback
+//                playNextEpisodeIfNeeded()
+//            }
+//        }
+//    }
+//    
+//    @objc private func handleAppBecameActive() {
+//        // Reactivate your audio session
+//        try? AVAudioSession.sharedInstance().setActive(true)
+//        // Resume playback if needed
+//        playNextEpisodeIfNeeded()
+//    }
+//    
+//    private func playNextEpisodeIfNeeded() {
+//        print("inside of the playNextEpisodeIfNeeded function")
+//        if isLooping && isCreateEpisodeSuccessful && isCurrentEpisodeFinished {
+//            retrieveAndPlayEpisode()
+//        }
+//    }
+    
     
     
     // getAuth
@@ -46,14 +102,11 @@ class PodcastViewModel: ObservableObject {
             }
         }
     }
-
     
     
     
     // looping podcast
     func startLoop(topic: String) {
-//        // Release the current item when new question is asked
-//        audioPlayer?.replaceCurrentItem(with: nil)
         // Stop and reset the current player if it's playing
         if isPlaying {
             audioPlayer?.pause()
@@ -81,25 +134,12 @@ class PodcastViewModel: ObservableObject {
             return
         }
         
-        // Convert the authToken string to Data
-        guard let data = authToken.data(using: .utf8) else {
-            print("Invalid auth token format.")
-            return
-        }
-        
-        // Parse the JSON data
-        guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
-                let dictionary = json as? [String: Any],
-                let userId = dictionary["userId"] as? String else {
-            print("Failed to parse userId from auth token.")
-            return
-        }
-        
         isCreateEpisodeSuccessful = false
-        apiService.createEpisode(userId: userId, topic: topic) { [weak self] success in
+        apiService.createEpisode(userId: authToken, topic: topic) { [weak self] success in
             if success {
                 self?.isCreateEpisodeSuccessful = true
                 self?.checkAndRetrieveEpisode()
+                print("going to checkAndRetrieveEpisode fucntion")
             } else {
                 // Handle error or retry logic
             }
@@ -124,30 +164,18 @@ class PodcastViewModel: ObservableObject {
             return
         }
         
-        // Convert the authToken string to Data
-        guard let data = authToken.data(using: .utf8) else {
-            print("Invalid auth token format.")
-            return
-        }
-        
-        // Parse the JSON data
-        guard let json = try? JSONSerialization.jsonObject(with: data, options: []),
-                let dictionary = json as? [String: Any],
-                let userId = dictionary["userId"] as? String else {
-            print("Failed to parse userId from auth token.")
-            return
-        }
-        
         isCurrentEpisodeFinished = false
-        apiService.retrieveEpisode(userId: userId) { [weak self] result in
-            switch result {
-            case .success(let audioUrl):
-                self?.playAudio(from: audioUrl)
-                self?.initiateEpisodeCreation(topic: "") // Start next episode creation
-                self?.isPlaying = true
-            case .failure(let error):
-                print("Error retrieving episode: \(error.localizedDescription)")
-                // Handle error or retry logic
+        apiService.retrieveEpisode(userId: authToken) { [weak self] result in
+            DispatchQueue.main.async { // Switch to the main thread for UI updates
+                switch result {
+                case .success(let audioUrl):
+                    self?.playAudio(from: audioUrl)
+                    self?.initiateEpisodeCreation(topic: "")
+                    self?.isPlaying = true
+                case .failure(let error):
+                    print("Error retrieving episode: \(error.localizedDescription)")
+                    self?.isPlaying = false // Ensure this update is on the main thread
+                }
             }
         }
     }

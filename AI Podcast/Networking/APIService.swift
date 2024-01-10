@@ -45,7 +45,7 @@ struct APIService {
     
     
     func createEpisode(userId: String, topic: String, completion: @escaping (Bool) -> Void) {
-            let url = URL(string: Constants.createEpisode + "?userId=\(userId)" + "&topic=\(topic)")!
+            let url = URL(string: Constants.createEpisode + "?userId=\(userId)" + "&topic=\(topic)" + "&debugMode=1")!
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
             
@@ -62,7 +62,7 @@ struct APIService {
     
     
     func retrieveEpisode(userId: String, completion: @escaping (Result<URL, Error>) -> Void) {
-        let url = URL(string: Constants.retrieveEpisode + "?userId=\(userId)")!
+        let url = URL(string: Constants.retrieveEpisode + "?userId=\(userId)" + "&debugMode=1")!
         print("retrieveEpisode called with URL: \(url.absoluteString)")
 
         var request = URLRequest(url: url)
